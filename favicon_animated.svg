@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="128" height="128" style="">
+  <defs>
+    <style>
+      .icon-line {
+        fill: none;
+        stroke: #e8e8e8;
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .icon-accent {
+        fill: none;
+        stroke: #ffca7a; /* Akzentfarbe */
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+    </style>
+  </defs>
+  <g>
+    <path class="icon-line FlliOsVc_0" d="M32,4 A16,16 0 0,1 48,20 C48,29 40,32 40,38 H24 C24,32 16,29 16,20 A16,16 0 0,1 32,4 Z"></path>
+    <path class="icon-line FlliOsVc_1" width="16" height="8" d="M 26,38 L 38,38 A 2,2,0,0,1,40,40 L 40,44 A 2,2,0,0,1,38,46 L 26,46 A 2,2,0,0,1,24,44 L 24,40 A 2,2,0,0,1,26,38"></path>
+    <path class="icon-accent FlliOsVc_2" d="M32,46L32,56"></path>
+    <path class="icon-accent FlliOsVc_3" d="M24,52L40,52"></path>
+  </g>
+<style data-made-with="vivus-instant">.FlliOsVc_0{stroke-dasharray:107 109;stroke-dashoffset:108;animation:FlliOsVc_draw 1333ms ease 0ms forwards;}.FlliOsVc_1{stroke-dasharray:45 47;stroke-dashoffset:46;animation:FlliOsVc_draw 1333ms ease 222ms forwards;}.FlliOsVc_2{stroke-dasharray:10 12;stroke-dashoffset:11;animation:FlliOsVc_draw 1333ms ease 444ms forwards;}.FlliOsVc_3{stroke-dasharray:16 18;stroke-dashoffset:17;animation:FlliOsVc_draw 1333ms ease 666ms forwards;}@keyframes FlliOsVc_draw{100%{stroke-dashoffset:0;}}@keyframes FlliOsVc_fade{0%{stroke-opacity:1;}93.54838709677419%{stroke-opacity:1;}100%{stroke-opacity:0;}}</style></svg>

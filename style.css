@@ -209,6 +209,18 @@ body::before {
     display: none;
 }
 
+#app-logo-button {
+    padding: 6px;
+}
+
+#app-logo-svg {
+    transition: transform var(--duration-2) var(--ease-smooth);
+}
+
+#app-logo-button:hover #app-logo-svg {
+    transform: scale(1.05) rotate(-3deg);
+}
+
 .cards-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));

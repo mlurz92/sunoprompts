@@ -9,17 +9,14 @@ const localStorageKey = 'customTemplatesJson';
 let modalEl, breadcrumbEl, containerEl, promptFullTextEl, notificationAreaEl, promptTitleInputEl;
 let createFolderModalEl, folderTitleInputEl, createFolderSaveBtn, createFolderCancelBtn;
 let moveItemModalEl, moveItemFolderTreeEl, moveItemConfirmBtn, moveItemCancelBtn;
-let topBarEl, topbarBackBtn, fixedBackBtn, fullscreenBtn, fullscreenEnterIcon, fullscreenExitIcon, themeToggleButton, downloadBtn, resetBtn, addBtn, addMenu, organizeBtn, organizeIcon, doneIcon;
+let topBarEl, topbarBackBtn, fixedBackBtn, fullscreenBtn, fullscreenEnterIcon, fullscreenExitIcon, downloadBtn, resetBtn, addBtn, addMenu, organizeBtn, organizeIcon, doneIcon;
 let mobileNavEl, mobileHomeBtn, mobileBackBtn;
 let modalEditBtn, modalSaveBtn, modalCloseBtn, copyModalButton;
 
 let svgTemplateFolder, svgTemplateExpand, svgTemplateCopy, svgTemplateCheckmark, svgTemplateDelete, svgTemplateEdit, svgTemplateMove;
 
-let cardObserver;
 let sortableInstance = null;
 let contextMenu = null;
-let dragOverlay = null;
-let dragIndicator = null;
 let dragSource = null;
 let dragTarget = null;
 let springLoadTimeout = null;
@@ -28,8 +25,7 @@ let touchStartX = 0, touchStartY = 0, touchEndX = 0, touchEndY = 0;
 const swipeThreshold = 50;
 const swipeFeedbackThreshold = 5;
 
-const MAX_ROTATION = 6;
-let currentTransitionDurationMediumMs = 300;
+const currentTransitionDurationMediumMs = 300;
 
 function initApp() {
     modalEl = document.getElementById('prompt-modal');
@@ -53,7 +49,6 @@ function initApp() {
     topbarBackBtn = document.getElementById('topbar-back-button');
     fixedBackBtn = document.getElementById('fixed-back');
     fullscreenBtn = document.getElementById('fullscreen-button');
-    themeToggleButton = document.getElementById('theme-toggle-button');
     downloadBtn = document.getElementById('download-button');
     resetBtn = document.getElementById('reset-button');
     addBtn = document.getElementById('add-button');
@@ -83,67 +78,15 @@ function initApp() {
     svgTemplateEdit = document.getElementById('svg-template-edit');
     svgTemplateMove = document.getElementById('svg-template-move');
 
-    updateDynamicDurations();
-    setupTheme();
-    setupIntersectionObserver();
     setupEventListeners();
     checkFullscreenSupport();
     createContextMenu();
-    createDragOverlay();
 
     if (isMobile()) {
         setupMobileSpecificFeatures();
     }
 
     loadJsonData(currentJsonFile);
-}
-
-function updateDynamicDurations() {
-    try {
-        const rootStyle = getComputedStyle(document.documentElement);
-        const mediumDuration = rootStyle.getPropertyValue('--transition-duration-medium').trim();
-        if (mediumDuration.endsWith('ms')) {
-            currentTransitionDurationMediumMs = parseFloat(mediumDuration);
-        } else if (mediumDuration.endsWith('s')) {
-            currentTransitionDurationMediumMs = parseFloat(mediumDuration) * 1000;
-        }
-    } catch (error) {
-        console.warn("Could not read --transition-duration-medium from CSS, using default.", error);
-        currentTransitionDurationMediumMs = 300;
-    }
-}
-
-function setupTheme() {
-    const preferredTheme = localStorage.getItem('preferredTheme') || 'dark';
-    applyTheme(preferredTheme);
-    if (themeToggleButton) {
-        themeToggleButton.addEventListener('click', toggleTheme);
-    }
-}
-
-function applyTheme(themeName) {
-    document.body.classList.remove('light-mode', 'dark-mode');
-    document.body.classList.add(themeName + '-mode');
-    if (themeToggleButton) {
-        themeToggleButton.setAttribute('aria-label', themeName === 'dark' ? 'Light Theme aktivieren' : 'Dark Theme aktivieren');
-    }
-    const metaThemeColor = document.querySelector("meta[name=theme-color]");
-    if (metaThemeColor) {
-        try {
-            const rootStyle = getComputedStyle(document.documentElement);
-            const newThemeColor = rootStyle.getPropertyValue('--bg-base').trim();
-            metaThemeColor.setAttribute("content", newThemeColor);
-        } catch(e) {
-            metaThemeColor.setAttribute("content", themeName === 'dark' ? "#08080a" : "#f8f9fa");
-        }
-    }
-}
-
-function toggleTheme() {
-    const currentThemeIsLight = document.body.classList.contains('light-mode');
-    const newTheme = currentThemeIsLight ? 'dark' : 'light';
-    applyTheme(newTheme);
-    localStorage.setItem('preferredTheme', newTheme);
 }
 
 function createContextMenu() {
@@ -193,17 +136,6 @@ function createContextMenu() {
         
         hideContextMenu();
     });
-}
-
-function createDragOverlay() {
-    dragOverlay = document.createElement('div');
-    dragOverlay.classList.add('drag-overlay');
-    
-    dragIndicator = document.createElement('div');
-    dragIndicator.classList.add('drag-indicator');
-    dragOverlay.appendChild(dragIndicator);
-    
-    document.body.appendChild(dragOverlay);
 }
 
 function showContextMenu(x, y, cardId) {
@@ -492,7 +424,7 @@ function moveNode(sourceId, targetFolderId, newIndex = -1) {
         targetFolderNode.items.push(sourceNode);
     }
 
-    persistJsonData('Element verschoben!', 'Verschieben fehlgeschlagen!');
+    persistJsonData('Element verschoben!', 'success');
     renderView(currentNode);
 }
 
@@ -518,7 +450,7 @@ function combineIntoNewFolder(sourceId, targetId) {
     const insertIndex = Math.min(sourceIndex, targetIndex);
     parentNode.items.splice(insertIndex, 0, newFolder);
 
-    persistJsonData('Neuer Ordner erstellt!', 'Erstellen fehlgeschlagen!');
+    persistJsonData('Neuer Ordner erstellt!', 'success');
     renderView(currentNode);
 }
 
@@ -608,24 +540,22 @@ function handleDeleteClick(id, cardElement) {
 
     const confirmation = confirm(`Möchten Sie "${nodeToDelete.title}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`);
     if (confirmation) {
-        gsap.to(cardElement, {
-            opacity: 0,
-            scale: 0.8,
-            duration: 0.3,
-            ease: "expo.in",
-            onComplete: () => {
-                const parentNode = findParentOfNode(id);
-                if (parentNode && parentNode.items) {
-                    const index = parentNode.items.findIndex(item => item.id === id);
-                    if (index > -1) {
-                        parentNode.items.splice(index, 1);
-                        persistJsonData('Element gelöscht!', 'Löschen fehlgeschlagen!');
-                        renderView(currentNode);
-                        updateBreadcrumb();
-                    }
+        cardElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        cardElement.style.opacity = '0';
+        cardElement.style.transform = 'scale(0.8)';
+        
+        setTimeout(() => {
+            const parentNode = findParentOfNode(id);
+            if (parentNode && parentNode.items) {
+                const index = parentNode.items.findIndex(item => item.id === id);
+                if (index > -1) {
+                    parentNode.items.splice(index, 1);
+                    persistJsonData('Element gelöscht!', 'success');
+                    renderView(currentNode);
+                    updateBreadcrumb();
                 }
             }
-        });
+        }, 300);
     }
 }
 
@@ -656,7 +586,7 @@ function startRenamingCard(card) {
             if (node) {
                 node.title = newTitle;
                 titleElement.textContent = newTitle;
-                persistJsonData('Umbenennung gespeichert!', 'Umbenennung fehlgeschlagen!');
+                persistJsonData('Umbenennung gespeichert!', 'success');
             }
         }
         
@@ -677,7 +607,7 @@ function exitRenameMode(card) {
     
     if (input && titleElement) {
         input.remove();
-        titleElement.style.display = 'block';
+        titleElement.style.display = '-webkit-box';
     }
 }
 
@@ -841,33 +771,6 @@ function performViewTransition(updateDomFunction, direction) {
     });
 }
 
-function setupIntersectionObserver() {
-    const options = { rootMargin: "0px", threshold: 0.05 };
-    cardObserver = new IntersectionObserver((entries, observer) => {
-        const visibleEntries = entries.filter(entry => entry.isIntersecting);
-        if (visibleEntries.length > 0) {
-            const targets = visibleEntries.map(entry => entry.target);
-            gsap.to(targets, {
-                opacity: 1,
-                y: 0,
-                scale: 1,
-                duration: 0.6,
-                ease: "expo.out",
-                stagger: {
-                    each: 0.06,
-                    from: "start"
-                },
-                onComplete: function() {
-                    this.targets().forEach(target => {
-                        observer.unobserve(target);
-                        target.classList.add('is-visible');
-                    });
-                }
-            });
-        }
-    }, options);
-}
-
 function checkFullscreenSupport() {
     const support = !!(document.documentElement.requestFullscreen || document.documentElement.mozRequestFullScreen || document.documentElement.webkitRequestFullscreen || document.documentElement.msRequestFullscreen);
     if (support && fullscreenBtn) {
@@ -985,8 +888,8 @@ function loadJsonData(filename) {
         try {
             const parsedData = JSON.parse(storedJson);
             processJson(parsedData);
-            downloadBtn.style.display = 'flex';
-            resetBtn.style.display = 'flex';
+            downloadBtn.style.display = 'inline-flex';
+            resetBtn.style.display = 'inline-flex';
             return;
         } catch (error) {
             console.error("Fehler beim Laden der JSON aus dem Local Storage, lade Originaldatei:", error);
@@ -1007,7 +910,6 @@ function loadJsonData(filename) {
         .catch(error => {
             console.error(`Load/Parse Error for ${filename}:`, error);
             containerEl.innerHTML = `<p style="color:red; text-align:center; padding:2rem;">Fehler beim Laden der Vorlagen: ${error.message}</p>`;
-            gsap.to(containerEl, {opacity: 1, duration: 0.3});
         });
 }
 
@@ -1017,13 +919,11 @@ function renderView(node) {
     containerEl.innerHTML = '';
     if (!node) {
          containerEl.innerHTML = `<p style="color:red; text-align:center; padding:2rem;">Interner Fehler: Ungültiger Knoten.</p>`;
-         gsap.to(containerEl, {opacity: 1, duration: 0.3});
          return;
      }
 
     const childNodes = node.items || [];
     const vivusSetups = [];
-    const cardsToObserve = [];
 
     childNodes.forEach(childNode => {
         const card = document.createElement('div');
@@ -1076,29 +976,27 @@ function renderView(node) {
             card.classList.add('prompt-card');
             const btnContainer = document.createElement('div'); btnContainer.classList.add('card-buttons');
             if (svgTemplateExpand) {
-                const expandBtn = document.createElement('button'); expandBtn.classList.add('button'); expandBtn.setAttribute('aria-label', 'Details anzeigen'); expandBtn.setAttribute('data-action', 'expand'); expandBtn.appendChild(svgTemplateExpand.cloneNode(true)); btnContainer.appendChild(expandBtn);
+                const expandBtn = document.createElement('button'); expandBtn.classList.add('btn', 'btn-ghost'); expandBtn.setAttribute('aria-label', 'Details anzeigen'); expandBtn.setAttribute('data-action', 'expand'); expandBtn.appendChild(svgTemplateExpand.cloneNode(true)); btnContainer.appendChild(expandBtn);
             }
             if (svgTemplateCopy) {
-                const copyBtn = document.createElement('button'); copyBtn.classList.add('button'); copyBtn.setAttribute('aria-label', 'Prompt kopieren'); copyBtn.setAttribute('data-action', 'copy'); copyBtn.appendChild(svgTemplateCopy.cloneNode(true)); btnContainer.appendChild(copyBtn);
+                const copyBtn = document.createElement('button'); copyBtn.classList.add('btn', 'btn-ghost'); copyBtn.setAttribute('aria-label', 'Prompt kopieren'); copyBtn.setAttribute('data-action', 'copy'); copyBtn.appendChild(svgTemplateCopy.cloneNode(true)); btnContainer.appendChild(copyBtn);
             }
             contentWrapper.appendChild(btnContainer);
         }
         card.appendChild(contentWrapper);
         containerEl.appendChild(card);
-        cardsToObserve.push(card);
-        addCard3DHoverEffect(card);
     });
 
     vivusSetups.forEach(setup => { if (document.body.contains(setup.parent)) setupVivusAnimation(setup.parent, setup.svgId); });
-    if (cardsToObserve.length > 0) {
-        cardsToObserve.forEach(c => cardObserver.observe(c));
-    }
+    
     if(childNodes.length > 0) {
         containerEl.scrollTop = currentScroll;
         adjustCardHeights();
+        requestAnimationFrame(() => {
+            document.querySelectorAll('.card').forEach(c => c.classList.add('is-visible'));
+        });
     } else if (childNodes.length === 0 && containerEl.innerHTML === '') {
         containerEl.innerHTML = '<p style="text-align:center; padding:2rem; opacity:0.7;">Dieser Ordner ist leer.</p>';
-        gsap.to(containerEl.firstChild, {opacity: 1, duration: 0.5});
     }
 }
 
@@ -1120,44 +1018,8 @@ function adjustCardHeights() {
         targetHeight = Math.max(targetHeight, maxFolderHeight);
     }
 
-    const promptCards = allCards.filter(card => card.classList.contains('prompt-card'));
-     if (promptCards.length > 0 && folderCards.length === 0) {
-    }
-
     allCards.forEach(card => {
         card.style.height = `${targetHeight}px`;
-    });
-}
-
-function addCard3DHoverEffect(card) {
-    let frameRequested = false;
-    card.addEventListener('mousemove', (e) => {
-        if (frameRequested || isMobile() || containerEl.classList.contains('edit-mode')) return;
-        frameRequested = true;
-        requestAnimationFrame(() => {
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-            const deltaX = x - centerX;
-            const deltaY = y - centerY;
-
-            const rotateY = Math.max(-MAX_ROTATION, Math.min(MAX_ROTATION, (deltaX / centerX) * MAX_ROTATION));
-            const rotateX = Math.max(-MAX_ROTATION, Math.min(MAX_ROTATION, -(deltaY / centerY) * MAX_ROTATION));
-
-            card.style.setProperty('--rotateX', `${rotateX}deg`);
-            card.style.setProperty('--rotateY', `${rotateY}deg`);
-            frameRequested = false;
-        });
-    });
-
-    card.addEventListener('mouseleave', () => {
-        if(isMobile()) return;
-        requestAnimationFrame(() => {
-            card.style.setProperty('--rotateX', '0deg');
-            card.style.setProperty('--rotateY', '0deg');
-        });
     });
 }
 
@@ -1263,8 +1125,8 @@ function updateBreadcrumb() {
          breadcrumbEl.appendChild(currentSpan);
     }
     
-    addBtn.style.display = (currentNode && currentNode.type === 'folder' && !containerEl.classList.contains('edit-mode')) ? 'flex' : 'none';
-    organizeBtn.style.display = (currentNode && currentNode.items && currentNode.items.length > 0) ? 'flex' : 'none';
+    addBtn.style.display = (currentNode && currentNode.type === 'folder' && !containerEl.classList.contains('edit-mode')) ? 'inline-flex' : 'none';
+    organizeBtn.style.display = (currentNode && currentNode.items && currentNode.items.length > 0) ? 'inline-flex' : 'none';
 
     const isModalVisible = modalEl.classList.contains('visible');
     const isTrulyAtHome = pathStack.length === 0 && currentNode === jsonData;
@@ -1463,7 +1325,7 @@ function saveNewFolder() {
     }
     currentNode.items.push(newFolderNode);
     
-    persistJsonData('Ordner hinzugefügt!', 'Hinzufügen fehlgeschlagen!');
+    persistJsonData('Ordner hinzugefügt!', 'success');
     renderView(currentNode);
     closeModal(createFolderModalEl);
 }
@@ -1491,7 +1353,7 @@ function savePromptChanges() {
         }
         currentNode.items.push(newPromptNode);
         
-        persistJsonData('Prompt hinzugefügt!', 'Hinzufügen fehlgeschlagen!');
+        persistJsonData('Prompt hinzugefügt!', 'success');
         renderView(currentNode);
         closeModal();
 
@@ -1502,24 +1364,24 @@ function savePromptChanges() {
         if (nodeToUpdate) {
             const newText = promptFullTextEl.value;
             nodeToUpdate.content = newText;
-            persistJsonData('Prompt gespeichert!', 'Speichern fehlgeschlagen!');
+            persistJsonData('Prompt gespeichert!', 'success');
         }
         toggleEditMode(false);
     }
 }
 
-function persistJsonData(successMsg, errorMsg) {
+function persistJsonData(successMsg, type) {
     try {
         const jsonString = JSON.stringify(jsonData, null, 2);
         localStorage.setItem(localStorageKey, jsonString);
-        showNotification(successMsg, 'success');
+        showNotification(successMsg, type);
         if (downloadBtn) {
-            downloadBtn.style.display = 'flex';
-            resetBtn.style.display = 'flex';
+            downloadBtn.style.display = 'inline-flex';
+            resetBtn.style.display = 'inline-flex';
         }
     } catch (e) {
         console.error("Fehler beim Speichern im Local Storage:", e);
-        showNotification(errorMsg, 'error');
+        showNotification('Speichern fehlgeschlagen!', 'error');
     }
 }
 
@@ -1572,7 +1434,7 @@ function copyToClipboard(text, buttonElement = null) {
 }
 
 let notificationTimeoutId = null;
-function showNotification(message, type = 'info', buttonElement = null) {
+function showNotification(message, type = 'info') {
     if (notificationTimeoutId) {
         const existingNotification = notificationAreaEl.querySelector('.notification');
         if(existingNotification) existingNotification.remove();
@@ -1580,16 +1442,12 @@ function showNotification(message, type = 'info', buttonElement = null) {
     }
 
     const notificationEl = document.createElement('div');
-    notificationEl.classList.add('notification');
-    if (type) {
-      notificationEl.classList.add(type);
-    }
+    notificationEl.classList.add('notification', type);
 
     if (type === 'success' && svgTemplateCheckmark) {
         const icon = svgTemplateCheckmark.cloneNode(true);
         icon.classList.add('icon');
         notificationEl.appendChild(icon);
-    } else if (type === 'error') {
     }
 
     const textNode = document.createElement('span');
@@ -1598,11 +1456,14 @@ function showNotification(message, type = 'info', buttonElement = null) {
 
     notificationAreaEl.appendChild(notificationEl);
 
-    void notificationEl.offsetWidth;
+    requestAnimationFrame(() => {
+        notificationEl.classList.add('show');
+    });
 
     notificationTimeoutId = setTimeout(() => {
+        notificationEl.classList.remove('show');
         notificationEl.classList.add('fade-out');
-        notificationEl.addEventListener('animationend', () => {
+        notificationEl.addEventListener('transitionend', () => {
             if (notificationEl.parentNode === notificationAreaEl) {
                 notificationEl.remove();
             }
@@ -1618,7 +1479,7 @@ function toggleOrganizeMode() {
     organizeIcon.classList.toggle('hidden', isEditing);
     doneIcon.classList.toggle('hidden', !isEditing);
     
-    addBtn.style.display = isEditing ? 'none' : 'flex';
+    addBtn.style.display = isEditing ? 'none' : 'inline-flex';
 
     if (isEditing) {
         sortableInstance = new Sortable(containerEl, {
@@ -1634,7 +1495,7 @@ function toggleOrganizeMode() {
                     currentNode.items.splice(newIndex, 0, itemNode);
                 }
                 
-                persistJsonData('Reihenfolge gespeichert!', 'Fehler beim Speichern!');
+                persistJsonData('Reihenfolge gespeichert!', 'success');
             },
         });
     } else {

@@ -9,7 +9,7 @@ const localStorageKey = 'customTemplatesJson';
 let modalEl, breadcrumbEl, containerEl, promptFullTextEl, notificationAreaEl, promptTitleInputEl;
 let createFolderModalEl, folderTitleInputEl, createFolderSaveBtn, createFolderCancelBtn;
 let moveItemModalEl, moveItemFolderTreeEl, moveItemConfirmBtn, moveItemCancelBtn;
-let topBarEl, topbarBackBtn, fixedBackBtn, fullscreenBtn, fullscreenEnterIcon, fullscreenExitIcon, downloadBtn, resetBtn, addBtn, addMenu, organizeBtn, organizeIcon, doneIcon;
+let topBarEl, topbarBackBtn, fixedBackBtn, fullscreenBtn, fullscreenEnterIcon, fullscreenExitIcon, downloadBtn, resetBtn, addBtn, addMenu, organizeBtn, organizeIcon, doneIcon, appLogoBtn;
 let mobileNavEl, mobileHomeBtn, mobileBackBtn;
 let modalEditBtn, modalSaveBtn, modalCloseBtn, copyModalButton;
 
@@ -54,6 +54,7 @@ function initApp() {
     addBtn = document.getElementById('add-button');
     addMenu = document.getElementById('add-menu');
     organizeBtn = document.getElementById('organize-button');
+    appLogoBtn = document.getElementById('app-logo-button');
 
     if (fullscreenBtn) {
         fullscreenEnterIcon = fullscreenBtn.querySelector('.icon-fullscreen-enter');
@@ -162,6 +163,24 @@ function hideContextMenu() {
     contextMenu.classList.remove('visible');
 }
 
+function navigateToHome() {
+    exitOrganizeMode();
+    if (modalEl.classList.contains('visible')) {
+        closeModal();
+    }
+    if (pathStack.length > 0 || currentNode !== jsonData) {
+        performViewTransition(() => {
+            currentNode = jsonData;
+            pathStack = [];
+            renderView(currentNode);
+            updateBreadcrumb();
+        }, 'backward');
+        if (isMobile()) {
+             window.history.pushState({ path: [], modalOpen: false }, '', window.location.href);
+        }
+    }
+}
+
 function setupEventListeners() {
     topbarBackBtn.addEventListener('click', () => {
         if (modalEl.classList.contains('visible')) {
@@ -171,23 +190,8 @@ function setupEventListeners() {
         }
     });
 
-    fixedBackBtn.addEventListener('click', () => {
-        exitOrganizeMode();
-        if (modalEl.classList.contains('visible')) {
-            closeModal();
-        }
-        if (pathStack.length > 0 || currentNode !== jsonData) {
-            performViewTransition(() => {
-                currentNode = jsonData;
-                pathStack = [];
-                renderView(currentNode);
-                updateBreadcrumb();
-            }, 'backward');
-            if (isMobile()) {
-                 window.history.pushState({ path: [], modalOpen: false }, '', window.location.href);
-            }
-        }
-    });
+    fixedBackBtn.addEventListener('click', navigateToHome);
+    appLogoBtn.addEventListener('click', navigateToHome);
 
     organizeBtn.addEventListener('click', toggleOrganizeMode);
     
@@ -461,26 +465,7 @@ function setupMobileSpecificFeatures() {
     mobileBackBtn = document.getElementById('mobile-back');
 
     if (mobileHomeBtn) {
-        mobileHomeBtn.addEventListener('click', () => {
-            exitOrganizeMode();
-            const modalWasVisible = modalEl.classList.contains('visible');
-            if (modalWasVisible) {
-                closeModal({ fromBackdrop: true });
-            }
-
-            const isCurrentlyAtHome = (currentNode === jsonData && pathStack.length === 0);
-
-            if (!isCurrentlyAtHome || modalWasVisible) {
-                performViewTransition(() => {
-                    currentNode = jsonData;
-                    pathStack = [];
-                    renderView(currentNode);
-                    updateBreadcrumb();
-                }, 'backward');
-
-                window.history.pushState({ path: [], modalOpen: false }, '', window.location.href);
-            }
-        });
+        mobileHomeBtn.addEventListener('click', navigateToHome);
     }
 
     if (mobileBackBtn) {
@@ -1067,15 +1052,7 @@ function updateBreadcrumb() {
         homeLink.classList.remove('breadcrumb-link');
     } else {
         homeLink.classList.add('breadcrumb-link');
-        homeLink.addEventListener('click', () => {
-            exitOrganizeMode();
-            if (modalEl.classList.contains('visible')) closeModal({ fromBackdrop: false });
-            performViewTransition(() => {
-                currentNode = jsonData; pathStack = [];
-                renderView(currentNode); updateBreadcrumb();
-            }, 'backward');
-            if (isMobile()) window.history.pushState({ path: [], modalOpen: false }, '', window.location.href);
-        });
+        homeLink.addEventListener('click', navigateToHome);
     }
     breadcrumbEl.appendChild(homeLink);
 

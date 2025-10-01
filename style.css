@@ -213,11 +213,11 @@ body::before {
     padding: 6px;
 }
 
-#app-logo-svg {
+#header-animated-logo {
     transition: transform var(--duration-2) var(--ease-smooth);
 }
 
-#app-logo-button:hover #app-logo-svg {
+#app-logo-button:hover #header-animated-logo {
     transform: scale(1.05) rotate(-3deg);
 }
 

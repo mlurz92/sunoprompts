@@ -1,7 +1,7 @@
 {
-    "name": "Prompt-Templates Browser",
+    "name": "SUNO Prompts",
     "short_name": "Prompts",
-    "description": "Ein Browser zum Navigieren und Kopieren von Prompt-Templates.",
+    "description": "Prompt-Vorlagen für die Songerstellung mit SUNO.AI.",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#08080a",
@@ -21,3 +21,4 @@
       }
     ]
   }
+

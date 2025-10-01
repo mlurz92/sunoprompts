@@ -187,6 +187,10 @@
        </svg>
     </button>
 
+    <div id="update-notification" class="update-notification hidden">
+        <span>Eine neue Version ist verfügbar.</span>
+        <button id="update-app-button" class="btn btn-primary">Aktualisieren</button>
+    </div>
     <div id="notification-area"></div>
 
     <svg style="display: none;">
@@ -224,8 +228,38 @@
     </svg>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vivus/0.4.6/vivus.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <script src="theme/suno-theme.js"></script>
     <script src="script.js"></script>
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+              console.log('ServiceWorker registration successful with scope: ', registration.scope);
+              
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    const event = new CustomEvent('swUpdate', { detail: registration });
+                    window.dispatchEvent(event);
+                  }
+                });
+              });
+            })
+            .catch(err => {
+              console.log('ServiceWorker registration failed: ', err);
+            });
+        
+          let refreshing;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (refreshing) return;
+            window.location.reload();
+            refreshing = true;
+          });
+        });
+      }
+    </script>
 
   </body>
 </html>

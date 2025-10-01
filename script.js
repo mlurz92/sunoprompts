@@ -12,6 +12,7 @@ let moveItemModalEl, moveItemFolderTreeEl, moveItemConfirmBtn, moveItemCancelBtn
 let topBarEl, topbarBackBtn, fixedBackBtn, fullscreenBtn, fullscreenEnterIcon, fullscreenExitIcon, downloadBtn, resetBtn, addBtn, addMenu, organizeBtn, organizeIcon, doneIcon, appLogoBtn;
 let mobileNavEl, mobileHomeBtn, mobileBackBtn;
 let modalEditBtn, modalSaveBtn, modalCloseBtn, copyModalButton;
+let updateNotificationEl, updateAppBtn;
 
 let svgTemplateFolder, svgTemplateExpand, svgTemplateCopy, svgTemplateCheckmark, svgTemplateDelete, svgTemplateEdit, svgTemplateMove;
 
@@ -55,6 +56,9 @@ function initApp() {
     addMenu = document.getElementById('add-menu');
     organizeBtn = document.getElementById('organize-button');
     appLogoBtn = document.getElementById('app-logo-button');
+
+    updateNotificationEl = document.getElementById('update-notification');
+    updateAppBtn = document.getElementById('update-app-button');
 
     if (fullscreenBtn) {
         fullscreenEnterIcon = fullscreenBtn.querySelector('.icon-fullscreen-enter');
@@ -268,6 +272,16 @@ function setupEventListeners() {
     promptFullTextEl.addEventListener('input', () => adjustTextareaHeight(promptFullTextEl));
     
     document.addEventListener('keydown', handleKeyDown);
+
+    let newWorker;
+    window.addEventListener('swUpdate', event => {
+        newWorker = event.detail.installing;
+        updateNotificationEl.classList.remove('hidden');
+    });
+
+    updateAppBtn.addEventListener('click', () => {
+        newWorker.postMessage({ action: 'skipWaiting' });
+    });
 }
 
 function handleKeyDown(e) {

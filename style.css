@@ -673,6 +673,38 @@ svg.icon {
 .notification.success svg.icon { stroke: var(--acc-2); }
 .notification.error svg.icon { stroke: var(--delete-color); }
 
+.update-notification {
+    position: fixed;
+    bottom: calc(1.2rem + var(--safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(16,22,36,.9);
+    color: var(--fg-1);
+    padding: 12px 18px;
+    border-radius: 14px;
+    box-shadow: var(--shadow-1);
+    border: 1px solid var(--line-1);
+    backdrop-filter: blur(var(--blur));
+    -webkit-backdrop-filter: blur(var(--blur));
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    z-index: 1200;
+    opacity: 0;
+    transition: transform var(--duration-3) var(--ease-smooth), opacity var(--duration-3) var(--ease-smooth);
+    pointer-events: none;
+}
+.update-notification:not(.hidden) {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: all;
+}
+.update-notification .btn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+}
+
 .context-menu {
     position: fixed;
     background: rgba(16,22,36,.9);
